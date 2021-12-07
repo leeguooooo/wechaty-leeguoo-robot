@@ -62,9 +62,9 @@ async function dispatchFriendFilterByMsgType(that: { Contact: { Type: { Official
  * @param {*} msg 消息主体
  */
 async function dispatchRoomFilterByMsgType(
-  that: { userSelf: () => { (): any; new (): any; name: { (): any; new (): any } }; Message: { Type: { Text: any; Emoticon: any; Image: any; Url: any; Video: any; Audio: any } } },
+  that: { userSelf: () => { (): any; new(): any; name: { (): any; new(): any } }; Message: { Type: { Text: any; Emoticon: any; Image: any; Url: any; Video: any; Audio: any } } },
   room: { topic: () => any },
-  msg: { talker: () => any; type: () => any; text: () => string }
+  msg: any
 ) {
   const contact = msg.talker() // 发消息人
   const contactName = contact.name()
@@ -72,7 +72,7 @@ async function dispatchRoomFilterByMsgType(
   const type = msg.type()
   const userSelfName = that.userSelf().name()
   let content = ''
-  let replys = ''
+  let replys
   let contactId = contact.id || '111'
   let contactAvatar = await contact.avatar()
   switch (type) {
@@ -109,7 +109,7 @@ async function dispatchRoomFilterByMsgType(
   }
 }
 
-async function onMessage(msg: { room: () => any; self: () => any }) {
+async function onMessage(msg: any) {
   const config = await allConfig()
   const { role } = config.userInfo
   const room = msg.room() // 是否为群消息

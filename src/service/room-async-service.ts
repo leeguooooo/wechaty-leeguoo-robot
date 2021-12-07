@@ -1,22 +1,27 @@
 import { allConfig } from '../common/configDb'
 import { Message, log } from 'wechaty'
 
-import { roomTalker } from 'wechaty-plugin-contrib/dist/src/talkers/mod'
+// import { roomTalker } from 'wechaty-plugin-contrib/dist/src/talkers/mod'
+// import { roomTalker } from 'wechaty-plugin-contrib/src/talkers/mod'
+import * as talker from 'wechaty-plugin-contrib'
+import { MessageType } from 'wechaty-puppet'
 
-function messageMapper(mapperOptions, one) {
+const roomTalker = talker.talkers.roomTalker
+
+function messageMapper(mapperOptions: any, one?: undefined) {
   log.verbose('WechatyPluginContrib', 'messageMapper(%s)', typeof mapperOptions === 'function' ? 'function' : JSON.stringify(mapperOptions))
 
-  return async function mapMessage(message) {
+  return async function mapMessage(message: any) {
     log.verbose('WechatyPluginContrib', 'mapMessage(%s)', message)
 
     return normalizeMappedMessageList(mapperOptions, message, one)
   }
 }
 
-async function normalizeMappedMessageList(options, message, one) {
+async function normalizeMappedMessageList(options: any, message: any, one: undefined) {
   log.verbose('WechatyPluginContrib', 'normalizeMappedMessageList(%s, %s)', JSON.stringify(options), message)
   const msgList = []
-  let optionList
+  let optionList: any[]
   if (Array.isArray(options)) {
     optionList = options
   } else {
@@ -30,7 +35,7 @@ async function normalizeMappedMessageList(options, message, one) {
     if (typeof option === 'function') {
       const ret = await option(message, one)
       if (ret) {
-        msgList.push(...(await normalizeMappedMessageList(ret, message)))
+        msgList.push(...(await normalizeMappedMessageList(ret, message, one)))
       }
     } else {
       msgList.push(option)
@@ -40,7 +45,7 @@ async function normalizeMappedMessageList(options, message, one) {
   return msgList
 }
 
-function messageMatcher(matcherOptions) {
+function messageMatcher(matcherOptions: any[]) {
   log.verbose('WechatyPluginContrib', 'messageMatcher(%s)', JSON.stringify(matcherOptions))
 
   if (!matcherOptions) {
@@ -53,7 +58,7 @@ function messageMatcher(matcherOptions) {
 
   const matcherOptionList = matcherOptions
 
-  return async function matchMessage(message) {
+  return async function matchMessage(message: any) {
     log.verbose('WechatyPluginContrib', 'messageMatcher() matchMessage(%s)', message)
     const room = message.room()
     const roomTopic = await room.topic()
@@ -90,7 +95,7 @@ function messageMatcher(matcherOptions) {
  * @param message
  * @returns {Promise<*|string|string>}
  */
-const senderDisplayName = async (message) => {
+const senderDisplayName = async (message: any) => {
   const talker = message.talker()
   const room = message.room()
   const alias = await room?.alias(talker)
@@ -103,8 +108,8 @@ const senderDisplayName = async (message) => {
  * @returns {function(*): *}
  * @example  const abbrRoomTopicForDevelopersHome = abbrRoomTopicByRegex(/\s*([^\s]*\s*[^\s]+)$/)    "Wechaty Developers' Home 8" -> "Home 8"
  */
-function abbrRoomTopicByRegex(matcher) {
-  return async function abbrRoomTopic(message) {
+function abbrRoomTopicByRegex(matcher: RegExp) {
+  return async function abbrRoomTopic(message: { room: () => any }) {
     const room = message.room()
     if (!room) {
       return
@@ -124,7 +129,7 @@ function abbrRoomTopicByRegex(matcher) {
  * @param message
  * @returns {Promise<string>}
  */
-const bidirectionalMapper = async (message) => {
+const bidirectionalMapper = async (message: any) => {
   const abbrRoomTopicForDevelopersHome = abbrRoomTopicByRegex(/\s*([^\s]*\s*[^\s]+)$/)
   // Drop all messages if not Text
   if (message.type() !== Message.Type.Text) {
@@ -145,7 +150,7 @@ const bidirectionalMapper = async (message) => {
  * @one topic name 指定群的名称 如果是这个群发的 那么就加一个消息类型
  * @returns {Promise<(string|Message)[]>}
  */
-const unidirectionalMapper = async (message, one) => {
+const unidirectionalMapper = async (message: { room: () => any; type: () => string | number; text: () => any }, one: any) => {
   const abbrRoomTopicForDevelopersHome = abbrRoomTopicByRegex(/\s*([^\s]*\s*[^\s]+)$/)
   const talkerDisplayName = await senderDisplayName(message)
   const roomShortName = (await abbrRoomTopicForDevelopersHome(message)) || 'Nowhere'
@@ -177,13 +182,13 @@ const unidirectionalMapper = async (message, one) => {
   return messageList
 }
 
-const isMatchConfig = (config) => {
+const isMatchConfig = (config: { whitelist: any; blacklist: any; model: number; many: string | any[]; one: any }) => {
   log.verbose('WechatyPluginContrib', 'ManyToManyRoomConnector() isMatchConfig(%s)', JSON.stringify(config))
 
   const matchWhitelist = messageMatcher(config.whitelist)
   const matchBlacklist = messageMatcher(config.blacklist)
 
-  return async function isMatch(message) {
+  return async function isMatch(message: any) {
     log.verbose('WechatyPluginContrib', 'ManyToManyRoomConnector() isMatchConfig() isMatch(%s)', message.toString())
     if (message.self()) {
       return
@@ -218,11 +223,11 @@ const isMatchConfig = (config) => {
  * @param msg
  * @returns {Promise<void>}
  */
-async function manyToMany(that, config, msg) {
+async function manyToMany(that: any, config: any, msg: any) {
   log.verbose('WechatyPluginContrib', 'ManyToManyRoomConnector(%s)', JSON.stringify(config))
   const isMatch = isMatchConfig(config)
   const mapMessage = messageMapper(config.map)
-  const matchAndForward = async (message, roomList) => {
+  const matchAndForward = async (message: { room: () => { (): any; new (): any; topic: { (): any; new (): any } } }, roomList: string | any[]) => {
     const match = await isMatch(message)
     if (!match) {
       return
@@ -261,11 +266,11 @@ async function manyToMany(that, config, msg) {
  * @returns {Promise<void>}
  */
 
-async function manyToOne(that, config, msg) {
+async function manyToOne(that: { Room: { find: (arg0: { topic: any }) => string | PromiseLike<string> } }, config: { map: any; one: any }, msg: any) {
   log.verbose('WechatyPluginContrib', 'ManyToOneRoomConnector(%s)', JSON.stringify(config))
   const isMatch = isMatchConfig(config)
   const mapMessage = messageMapper(config.map)
-  const matchAndForward = async (message, room) => {
+  const matchAndForward = async (message: any, room: string) => {
     const match = await isMatch(message)
     if (!match) {
       return
@@ -292,11 +297,11 @@ async function manyToOne(that, config, msg) {
  * @param msg
  * @returns {Promise<void>}
  */
-async function oneToMany(that, config, msg) {
+async function oneToMany(that: { Room: { find: (arg0: { topic: any }) => any } }, config: { map: any; one: any; many: string | any[] }, msg: any) {
   log.verbose('WechatyPluginContrib', 'OneToManyRoomConnector(%s)', JSON.stringify(config))
   const isMatch = isMatchConfig(config)
   const mapMessage = messageMapper(config.map, config.one)
-  const matchAndForward = async (message, roomList) => {
+  const matchAndForward = async (message: any, roomList: any[]) => {
     const match = await isMatch(message)
     if (!match) {
       return
@@ -332,13 +337,13 @@ async function oneToMany(that, config, msg) {
  * @param list 规则列表
  * @returns {Promise<void>}
  */
-async function dispatchAsync(that, msg, list) {
+export async function dispatchAsync(that: any, msg: any, list: string | any[]) {
   for (let i = 0; i < list.length; i++) {
     const config = list[i]
     config.blacklist = [async () => true]
     if (config.forward === 1) {
       config.map = bidirectionalMapper
-      config.whitelist = [async (message) => message.type() === Message.Type.Text]
+      config.whitelist = [async (message: { type: () => MessageType }) => message.type() === Message.Type.Text]
     } else if (config.forward === 2) {
       config.blacklist = []
       config.map = unidirectionalMapper

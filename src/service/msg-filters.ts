@@ -46,26 +46,26 @@ async function roomInviteMsg({ that, msg, contact, config }) {
  * @returns {Promise<boolean>}
  */
 async function addSchedule(that: any, obj: any): Promise<boolean> {
-  try {
-    let scheduleObj = await setSchedule(obj)
-    let nickName = scheduleObj.subscribe
-    let time = scheduleObj.time
-    let Rule1 = scheduleObj.isLoop ? time : new Date(time)
-    let content = scheduleObj.content
-    let contact = await that.Contact.find({ name: nickName })
-    let id = scheduleObj.id
-    setLocalSchedule(Rule1, async () => {
-      console.log('你的专属提醒开启啦！')
-      await contact.say(content)
-      if (!scheduleObj.isLoop) {
-        updateSchedule(id)
-      }
-    })
-    return true
-  } catch (error) {
-    console.log('设置定时任务失败', error)
-    return false
-  }
+  // try {
+  //   let scheduleObj = await setSchedule(obj)
+  //   let nickName = scheduleObj.subscribe
+  //   let time = scheduleObj.time
+  //   let Rule1 = scheduleObj.isLoop ? time : new Date(time)
+  //   let content = scheduleObj.content
+  //   let contact = await that.Contact.find({ name: nickName })
+  //   let id = scheduleObj.id
+  //   setLocalSchedule(Rule1, async () => {
+  //     console.log('你的专属提醒开启啦！')
+  //     await contact.say(content)
+  //     if (!scheduleObj.isLoop) {
+  //       updateSchedule(id)
+  //     }
+  //   })
+  return true
+  // } catch (error) {
+  //   console.log('设置定时任务失败', error)
+  //   return false
+  // }
 }
 
 async function scheduleJobMsg({ that, msg, name }) {
@@ -105,8 +105,8 @@ async function scheduleJobMsg({ that, msg, name }) {
  * @returns {String}
  */
 async function getEventReply(that, event, msg, name, id, avatar, room) {
-  let reply = await dispatch.dispatchEventContent(that, event, msg, name, id, avatar, room)
-  return reply
+  // let reply = await dispatch.dispatchEventContent(that, event, msg, name, id, avatar, room)
+  return ''
 }
 
 async function eventMsg({ that, msg, name, id, avatar, config, room }) {
@@ -153,7 +153,7 @@ async function robotMsg({ msg, name, id, config }) {
   if (config.autoReply) {
     console.log('开启了机器人自动回复功能')
     obj.type = 1
-    obj.content = await dispatch.dispatchAiBot(config.defaultBot, msg, name, id)
+    // obj.content = await dispatch.dispatchAiBot(config.defaultBot, msg, name, id)
   } else {
     console.log('没有开启机器人自动回复功能')
     obj.type = 1
